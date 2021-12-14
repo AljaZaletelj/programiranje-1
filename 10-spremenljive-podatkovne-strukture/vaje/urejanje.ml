@@ -9,6 +9,13 @@
  val l : int list = [0; 1; 0; 4; 0; 9; 1; 2; 5; 4]
 [*----------------------------------------------------------------------------*)
 
+let rec randlist len max = 
+  if len > 0 then
+      let n = Random.int max in
+    n :: randlist (len - 1) max
+  else
+    []
+
 
 (*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*]
  Sedaj lahko s pomočjo [randlist] primerjamo našo urejevalno funkcijo (imenovana
@@ -35,12 +42,21 @@
  - : int list = [7]
 [*----------------------------------------------------------------------------*)
 
+let rec insert y xs = match xs with
+    |[] -> [y]
+    |z :: zs -> 
+      if z <= y then insert y zs
+      else y :: (z :: zs)
+
 
 (*----------------------------------------------------------------------------*]
  Prazen seznam je že urejen. Funkcija [insert_sort] uredi seznam tako da
  zaporedoma vstavlja vse elemente seznama v prazen seznam.
 [*----------------------------------------------------------------------------*)
 
+let rec insert_sort l  = match l with
+  |[] -> []
+  |x::xs -> insert x []
 
 
 (*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*]
@@ -52,6 +68,19 @@
  najmanjši element v [list] in seznam [list'] enak [list] z odstranjeno prvo
  pojavitvijo elementa [z]. V primeru praznega seznama vrne [None]. 
 [*----------------------------------------------------------------------------*)
+
+let rec min l = 
+  let urejen = List.sort l in 
+    match urejen with
+      |[] -> None
+      |x::xs -> x
+
+
+let min_and_rest l = match l with
+  |[] -> None
+  |[x] -> Some (x, [])
+  |x::y::ys -> 
+    
 
 
 (*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*]
