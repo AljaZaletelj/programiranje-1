@@ -27,6 +27,31 @@
 #     [10, 0, 2, 4, 11, 5, 17, 15, 18]
 ###############################################################################
 
+#def pivot(a, start, end):
+#    indeks = start
+#    pivot = a[start]
+#    for i in range(start, end+1):
+#        if a[i] < pivot:
+#            indeks += 1
+#    return indeks
+
+def pivot(a, start, stop):
+    #start < stop drugače nima smisla
+    left = start
+    right = stop
+    moj_pivot = a[start]
+    while left < right:
+        if a[left + 1] <= moj_pivot:
+            left += 1
+        elif a[right] > moj_pivot:
+            right -= 1
+        else:
+            a[left + 1], a[right] = a[right], a[left + 1]
+    #pivot damo na pravo mesto
+    a[left], a[start] = a[start], a[left]
+    return left
+
+
 
 ###############################################################################
 # V tabeli želimo poiskati vrednost k-tega elementa po velikosti.
@@ -44,6 +69,13 @@
 ###############################################################################
 
 
+def kth_element(a, k):
+    for pivot in a:
+        if pivot(a, 0, len(a)) == k:
+            return pivot
+        
+
+
 ###############################################################################
 # Tabelo a želimo urediti z algoritmom hitrega urejanja (quicksort).
 #
@@ -59,6 +91,8 @@
 #     [2, 3, 4, 5, 10, 11, 15, 17, 18]
 ###############################################################################
 
+def quicksort_part(a, start, end):
+    pass
 
 ###############################################################################
 # Če imamo dve urejeni tabeli, potem urejeno združeno tabelo dobimo tako, da
@@ -83,6 +117,23 @@
 #
 ###############################################################################
 
+def merge(target, l1, l2):
+    i1 = 0
+    i2 = 0
+    while i1 < len(l1) and i2 < len(l2):
+        if l1[i1] <= l2[i2]:
+            target[i1 + i1] = l1[i1]
+            i1 += 1
+        else:
+            target[i1 + i1] = l2[i2]
+            i2 += 1
+    while i1 < len(l1):
+        target[i1 + i1] = l1[i1]
+        i1 += 1
+    while i2 < len(l2):
+        target[i1 + i2] = l2[i2]
+        i2 += 1
+    return target
 
 ###############################################################################
 # Tabelo želimo urediti z zlivanjem (merge sort). Tabelo razdelimo na polovici,
@@ -99,3 +150,12 @@
 #     >>> a
 #     [2, 3, 4, 5, 10, 11, 15, 17, 18]
 ###############################################################################
+
+def mergesort(a):
+    if len(a) % 2 == 1:
+        s = (len(a) + 1) / 2
+    else:
+        s = len(a) / 2
+    levi = a[:s]
+    desni = a[s:]
+    while 

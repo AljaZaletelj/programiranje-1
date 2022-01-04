@@ -152,7 +152,9 @@ let rec rotate n sez =
  - : int list = [2; 3; 2; 3]
 [*----------------------------------------------------------------------------*)
 
-let rec remove = ()
+let rec remove elt list = match list with
+  |x::xs -> if x = elt then remove elt xs else x :: remove elt xs
+  |[] -> []
 
 (*----------------------------------------------------------------------------*]
  Funkcija [is_palindrome] za dani seznam ugotovi ali predstavlja palindrom.
@@ -164,7 +166,14 @@ let rec remove = ()
  - : bool = false
 [*----------------------------------------------------------------------------*)
 
-let rec is_palindrome = ()
+let rec obrni sez = match sez with
+  |[] -> []
+  |x::xs -> (obrni xs) @ [x]
+
+
+let rec is_palindrome sez = 
+  let obrnjen = obrni sez in 
+  sez = obrnjen
 
 (*----------------------------------------------------------------------------*]
  Funkcija [max_on_components] sprejme dva seznama in vrne nov seznam, katerega
@@ -175,8 +184,10 @@ let rec is_palindrome = ()
  - : int list = [5; 4; 3; 3; 4]
 [*----------------------------------------------------------------------------*)
 
-let rec max_on_components = ()
-
+let rec max_on_components sez1 sez2 = match (sez1, sez2) with
+  | (x :: xs, y :: ys) -> max x y :: max_on_components xs ys
+  | _ -> []
+ 
 (*----------------------------------------------------------------------------*]
  Funkcija [second_largest] vrne drugo največjo vrednost v seznamu. Pri tem se
  ponovitve elementa štejejo kot ena vrednost. Predpostavimo, da ima seznam vsaj
@@ -187,4 +198,10 @@ let rec max_on_components = ()
  - : int = 10
 [*----------------------------------------------------------------------------*)
 
-let rec second_largest = ()
+let rec largest list = match list with
+  |[] -> failwith("List too short.")
+  |x :: [] -> x
+  |x :: xs -> max x (largest xs)
+   
+let second_largest list = 
+  largest ( remove (largest list) list)

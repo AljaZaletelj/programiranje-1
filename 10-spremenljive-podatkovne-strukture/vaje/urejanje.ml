@@ -45,8 +45,8 @@ let rec randlist len max =
 let rec insert y xs = match xs with
     |[] -> [y]
     |z :: zs -> 
-      if z <= y then insert y zs
-      else y :: (z :: zs)
+      if z <= y then y :: z :: zs
+      else y :: (insert y zs)
 
 
 (*----------------------------------------------------------------------------*]
@@ -69,19 +69,25 @@ let rec insert_sort l  = match l with
  pojavitvijo elementa [z]. V primeru praznega seznama vrne [None]. 
 [*----------------------------------------------------------------------------*)
 
-let rec min l = 
-  let urejen = List.sort l in 
-    match urejen with
-      |[] -> None
-      |x::xs -> x
+let rec remove x = function
+  |[]->[]
+  |y::ys ->
+    if x=y then ys
+    else y :: (remove x ys)
 
-
-let min_and_rest l = match l with
-  |[] -> None
-  |[x] -> Some (x, [])
-  |x::y::ys -> 
+let min_and_rest l = 
+  let rec simple_min current_min = function
+    |[] -> current_min
+    |x::xs ->
+        let current_min = if current_min <= x then current_min else x
+      in simple_min current_min xs
+  in 
+  match l with 
+    |[] -> None
+    |x::xs -> 
+      let min_el = simple_min x xs in
+      Some(min_el, remove min_el l)
     
-
 
 (*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*]
  Pri urejanju z izbiranjem na vsakem koraku ločimo dva podseznama, kjer je prvi
@@ -101,6 +107,13 @@ let min_and_rest l = match l with
  Namig: Uporabi [min_and_rest] iz prejšnje naloge.
 [*----------------------------------------------------------------------------*)
 
+let selection_sort l =
+  let rec aux sort unsort =
+    match min_and_rest unsort with
+      |None -> List.rev sort
+      |Some(m, rest) -> aux (m :: sort) rest
+  in
+  aux [] l
 
 
 (*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*]
@@ -130,6 +143,10 @@ let min_and_rest l = match l with
  - : int array = [|0; 4; 2; 3; 1|]
 [*----------------------------------------------------------------------------*)
 
+let swap a i j = 
+  let z = a.(i) in 
+  a.(i) <- a.(j);
+  a.(j) <- z
 
 (*----------------------------------------------------------------------------*]
  Funkcija [index_min a lower upper] poišče indeks najmanjšega elementa tabele
@@ -138,6 +155,13 @@ let min_and_rest l = match l with
  index_min [|0; 2; 9; 3; 6|] 2 4 = 4
 [*----------------------------------------------------------------------------*)
 
+let index_min a lower upper = 
+  let ind = ref lower in 
+  for i = lower to upper do 
+    if a.(i) < a.(!ind) then
+      ind := i
+  done;
+  !ind
 
 (*----------------------------------------------------------------------------*]
  Funkcija [selection_sort_array] implementira urejanje z izbiranjem na mestu. 
@@ -146,3 +170,8 @@ let min_and_rest l = match l with
  skupaj z [randlist].
 [*----------------------------------------------------------------------------*)
 
+let selection_sort_array a = 
+  for s_b = 0 to Array.length a - 1 do 
+    let i = index_min a s_b  (Array.length a - 1) in 
+    swap a i s_b
+  done;

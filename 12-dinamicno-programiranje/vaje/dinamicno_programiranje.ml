@@ -21,6 +21,13 @@ let test_matrix =
      [| 2 ; 4 ; 5 |];
      [| 7 ; 0 ; 1 |] |]
 
+(* let rec max_cheese polje = 
+   let n = Array.length polje in 
+   let aux (i, j) acc = match (i, j) with
+      |(n , _) | (_, n) -> acc 
+      |_ -> max_cheese () *)
+
+
 (*----------------------------------------------------------------------------*]
  Poleg količine sira, ki jo miška lahko poje, jo zanima tudi točna pot, ki naj
  jo ubere, da bo prišla do ustrezne pojedine.
@@ -37,6 +44,36 @@ let test_matrix =
 [*----------------------------------------------------------------------------*)
 
 type mouse_direction = Down | Right
+
+let rec optimal_path_bottom matrix = 
+   let rec aux vrs stol = 
+      let curr =  matrix.(vrs).(stol) in 
+      (* desno *)
+      let max_desno, pot_desno = 
+         if stol < Array.length matrix.(0) then 
+            let best, pot = aux vrs (stol + 1) in 
+            best, pot 
+         else 
+            (0, [])
+      in
+      (* desno *)
+      let max_dol, pot_dol = 
+         if vrs < Array.length matrix.(0) then 
+               let best, pot = aux (vrs + 1) stol in 
+               best, pot 
+         else 
+               (0, [])
+      in
+      let max_pot = if max_dol > max_desno then Down :: pot_dol else Right :: pot_desno in
+      (curr + (max max_desno max_dol), max_pot)
+   in
+   let (_, pot) = aux 0, 0 in 
+   pot
+
+
+
+
+(* d(x,y) = max d(x+1, y) d(x, y+1) + neveljavne stvari *)
 
 
 (*----------------------------------------------------------------------------*]
