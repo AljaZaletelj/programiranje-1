@@ -1,4 +1,4 @@
-(* Pomožni tip, ki predstavlja mrežo *)
+(* Pomožni tip, ki predstavlja mrežo .... *)
 
 type 'a grid = 'a Array.t Array.t
 
