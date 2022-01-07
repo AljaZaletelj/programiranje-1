@@ -3,7 +3,7 @@
 type 'a grid = 'a Array.t Array.t
 
 (* Funkcije za prikaz mreže.
-   Te definiramo najprej, da si lahko z njimi pomagamo pri iskanju napak. *)
+  Te definiramo najprej, da si lahko z njimi pomagamo pri iskanju napak. *)
 
 (* Razbije seznam [lst] v seznam seznamov dolžine [size] *)
 let chunkify size lst =
@@ -143,153 +143,66 @@ let int_option_to_int = function
   |Some digit -> digit
   |None -> 0
 
+(* pomozne funkcije za is_valid_solution, !popravi vse funkcije za option int *)
 
-(* ?? *)
-let is_valid_solution problem solution = 
-  (problem.initial_grid |> map_grid int_option_to_int) = solution
+let preveri_1_do_9 (seznam : int list) = match seznam with 
+  |[] -> false
+  |x::xs -> (List.sort compare seznam) = [1;2;3;4;5;6;7;8;9]
+
+let grid_to_list_list (grid : int grid) =  
+  let big_list = Array.to_list grid in 
+  List.map (Array.to_list) big_list
+
+let rec preveri_sezname seznam_seznamov =
+  List.for_all (preveri_1_do_9) seznam_seznamov
+
+let preveri_istolezne_komponente (mat1 : int array array) (mat2 : int array array) = 
+  let rec aux (i, j) m1 m2 =
+    let prva = m1.(i).(j) in 
+    match prva with 
+      |0 -> if j < 8 then aux (i, (j + 1)) m1 m2  else 
+              if i < 8 then aux ((i + 1), 0) m1 m2 else true  
+      |_ -> 
+        let enakost = (m1.(i).(j) = m2.(i).(j)) in 
+        match enakost with 
+          |false -> false 
+          |true -> 
+            if j < 8 then aux (i, (j + 1)) m1 m2  else 
+              if i < 8 then aux ((i + 1), 0) m1 m2 else true  
+  in 
+  aux (0, 0) mat1 mat2
 
 
-(* neumnosti----------------------------------------------------------------------------------------------------- *)
-
-(* primeri za pomoč *)
-let f n = string_of_int n
-
-let primer_int = [|
-  [|1;2;3;4;5;6;7;8;9|];
-  [|2;2;2;2;2;2;2;2;2|];
-  [|3;3;3;3;3;3;3;3;3|];
-  [|4;4;4;4;4;4;4;4;4|];
-  [|5;5;5;5;5;5;5;5;5|];
-  [|6;6;6;6;6;6;6;6;6|];
-  [|7;7;7;7;7;7;7;7;7|];
-  [|8;8;8;8;8;8;8;8;8|];
-  [|9;9;9;9;9;9;9;9;9|]
-  |] 
-
-  (* 
-  print_grid f primer vrne
-┏━━━┯━━━┯━━━┓
-┃123│456│789┃
-┃222│222│222┃
-┃333│333│333┃
-┠───┼───┼───┨
-┃444│444│444┃
-┃555│555│555┃
-┃666│666│666┃
-┠───┼───┼───┨
-┃777│777│777┃
-┃888│888│888┃
-┃999│999│999┃
-┗━━━┷━━━┷━━━┛
- *)
-
-  let primer_option = [|
-    [|Some 1; Some 2; Some 3; Some 4; Some 5; Some 6; Some 7; Some 8; Some 9|];
-    [|Some 2; Some 2; Some 2; Some 2; Some 2; Some 2; Some 2; Some 2; Some 2|];
-    [|Some 3; Some 3; Some 3; Some 3; Some 3; Some 3; Some 3; Some 3; Some 3|];
-    [|Some 4; Some 4; Some 4; Some 4; Some 4; Some 4; Some 4; Some 4; Some 4|];
-    [|Some 5; Some 5; Some 5; Some 5; Some 5; Some 5; Some 5; Some 5; Some 5|];
-    [|None; Some 6; Some 6; Some 6; Some 6; Some 6; Some 6; Some 6; Some 6|];
-    [|Some 7; Some 7; Some 7; Some 7; Some 7; Some 7; Some 7; Some 7; Some 7|];
-    [|Some 8; Some 8; Some 8; Some 8; Some 8; Some 8; Some 8; Some 8; Some 8|];
-    [|Some 9; Some 9; Some 9; Some 9; Some 9; Some 9; Some 9; Some 9; Some 9|]
-    |]
-
-  let primer_none = [|
-    [|None; None; None; None; None; None; None; None; None|];
-    [|None; None; None; None; None; None; None; None; None|];
-    [|None; None; None; None; None; None; None; None; None|];
-    [|None; None; None; None; None; None; None; None; None|];
-    [|None; None; None; None; None; None; None; None; None|];
-    [|None; None; None; None; None; None; None; None; None|];
-    [|None; None; None; None; None; None; None; None; None|];
-    [|None; None; None; None; None; None; None; None; None|];
-    [|None; None; None; None; None; None; None; None; None|]
-    |]
-
-  let primer_neresen = [|
-    [|None; None; None; Some 6; None; Some 2; None; None; None|];
-    [|Some 4; None; None; None; Some 5; None; None; None; Some 1|];
-    [|None; Some 8; Some 5; None; Some 1; None; Some 6; Some 1; None|];
-    [|None; Some 3; Some 8; Some 2; None; Some 6; Some 7; Some 1; None|];
-    [|None; None; None; None; None; None; None; None; None|];
-    [|None; Some 1; Some 9; Some 4; None; Some 7; Some 3; Some 5; None|];
-    [|None; Some 2; Some 6; None; Some 4; Some 5; Some 3; None; None|];
-    [|Some 9; None; None; None; Some 2; None; None; None; Some 7|];
-    [|None; None; None; Some 8; None; Some 9; None; None; None|]
-    |]
-
-  let primer_problem = {initial_grid = primer_neresen}
-
-    (*
-    ┏━━━┯━━━┯━━━┓
-    ┃   │6 2│   ┃
-    ┃4  │ 5 │  1┃
-    ┃ 85│ 1 │62 ┃
-    ┠───┼───┼───┨
-    ┃ 38│2 6│71 ┃
-    ┃   │   │   ┃
-    ┃ 19│4 7│35 ┃
-    ┠───┼───┼───┨
-    ┃ 26│ 4 │53 ┃
-    ┃9  │ 2 │  7┃
-    ┃   │8 9│   ┃
-    ┗━━━┷━━━┷━━━┛ *)
+(* mora preveriti da ima vsaka vrstica/stolp/box 1-9 in da ima podane stevke na istem mestu kot original *)
+let is_valid_solution problem (solution : int array array) =
+  let original = (problem.initial_grid |> map_grid int_option_to_int) in
+  match preveri_istolezne_komponente original solution  with 
+    |false -> false 
+    |true -> 
+      let vrstice = rows solution in 
+        match preveri_sezname (List.map Array.to_list vrstice) with 
+          |false -> false 
+          |true -> 
+            let stolpci = columns solution in 
+              match preveri_sezname (List.map Array.to_list stolpci) with 
+                |false ->false
+                |true -> 
+                  let skatle = boxes solution in         
+                    match preveri_sezname (List.map Array.to_list skatle) with 
+                      |false -> false 
+                      |true -> true
 
 
 
- let primer_string = "
-┏━━━┯━━━┯━━━┓
-┃483│921│657┃
-┃967│3 5│821┃
-┃251│876│493┃
-┠───┼───┼───┨
-┃548│132│976┃
-┃729│ 64│ 38┃
-┃136│798│ 45┃
-┠───┼───┼───┨
-┃372│689│514┃
-┃814│253│769┃
-┃695│417│382┃
-┗━━━┷━━━┷━━━┛"
-
-let primer_enostaven_neresen = [|
-[|Some 4; Some 8; Some 3; Some 9; Some 2; Some 1; Some 6; Some 5;  Some 7|];
-[|Some 9; Some 6; Some 7; Some 3; None; Some 5; Some 8; Some 2; Some 1|];
-[|Some 2; Some 5; Some 1; Some 8; Some 7; Some 6; Some 4; Some 9; Some 3|];
-[|Some 5; Some 4; Some 8; Some 1; Some 3; Some 2; Some 9; Some 7;Some 6|];
-[|Some 7; Some 2; Some 9; None; Some 6; Some 4; None; Some 3; Some 8|];
-[|Some 1; Some 3; Some 6; Some 7; Some 9; Some 8; None; Some 4; Some 5|];
-[|Some 3; Some 7; Some 2; Some 6; Some 8; Some 9; Some 5; Some 1;Some 4|];
-[|Some 8; Some 1; Some 4; Some 2; Some 5; Some 3; Some 7; Some 6;Some 9|];
-[|Some 6; Some 9; Some 5; Some 4; Some 1; Some 7; Some 3; Some 8;Some 2|]|]
-
-let primer_enostaven_problem ={initial_grid = primer_enostaven_neresen}
-
-
-
-
-
-
-
-
-
-
-
-
-
-(* --------------------------------------------------- *)
+(* -------------------------------------------------------------- *)
 (* ----SOLVER--------------------------------------------------- *)
 type available = { loc : int * int; possible : int list } 
 
 (* TODO: tip stanja ustrezno popravite, saj boste med reševanjem zaradi učinkovitosti
    želeli imeti še kakšno dodatno informacijo *)
-type state = { problem : problem; current_grid : int option grid }
 
-(* primer za pomoc *) 
+type state = { problem : problem; current_grid : int option grid;  mutable moznosti : available list}
 
-let primer_state = {problem = primer_problem; current_grid = primer_neresen}
-let primer_enostaven_state = {problem = primer_enostaven_problem; current_grid = primer_enostaven_neresen}
 
 let print_state (state : state) : unit =
   print_grid
@@ -298,21 +211,8 @@ let print_state (state : state) : unit =
 
 type response = Solved of solution | Unsolved of state | Fail of state
 
-let initialize_state (problem : problem) : state =
-  { current_grid = copy_grid problem.initial_grid; problem }
 
-let validate_state (state : state) : response =
-  let unsolved =
-    Array.exists (Array.exists Option.is_none) state.current_grid
-  in
-  if unsolved then Unsolved state
-  else
-    (* Option.get ne bo sprožil izjeme, ker so vse vrednosti v mreži oblike Some x *)
-    let solution = map_grid Option.get state.current_grid in
-    if is_valid_solution state.problem solution then Solved solution
-    else Fail state
-
-(* ------------pomožne funkcije----------------------------------------------------------------------------------------------------------------------- *)
+(* ------------pomožne funkcije za iskanje možnsti v celici----------------------------------------------- *)
 let rec remove elt list = match list with
   |x::xs -> if x = elt then remove elt xs else x :: remove elt xs
   |[] -> []
@@ -345,112 +245,121 @@ let neporabljene (arr : int option Array.t) (moznosti : int list) =
   let porabljene = int_option_list_to_int_list (Array.to_list arr) in
   razlika_seznamov porabljene moznosti
 
+(* pomozne funkcije za racunanje stevilke boxa *)
 let row_level row_ind = match row_ind with
   |0|1|2 -> 0
   |3|4|5 -> 3
   |6|7|8 -> 6
   |_ -> failwith "That row does not exist"
-
 let col_level col_ind = match col_ind with
   |0|1|2 -> 0
   |3|4|5 -> 1
   |6|7|8 -> 2
   |_ -> failwith "That column does not exist"
-
 let box_number (r, c) =
   (row_level r) + (col_level c)
 
 let mozne_stevke_v_celici ((r, c) as loc) grid =
-  let neporabljene_v_vrstici = neporabljene (get_row grid r) vse_moznosti in 
-  let neporabljene_v_stoplcu = neporabljene (get_column grid c) vse_moznosti in 
-  let neporabljene_v_boxu = neporabljene (get_box grid (box_number loc)) vse_moznosti in
-  match (neporabljene_v_vrstici, neporabljene_v_stoplcu, neporabljene_v_boxu) with
-    |([], _, _) | (_, [], _) | (_, _, []) -> []
-    |([x], _, _) | (_, [x], _) | (_, _, [x]) ->  [x]
-    |_ -> presek_seznamov neporabljene_v_vrstici (presek_seznamov neporabljene_v_stoplcu neporabljene_v_boxu)
+  match grid.(r).(c) with 
+  |Some x -> []
+  |None -> 
+    let neporabljene_v_vrstici = neporabljene (get_row grid r) vse_moznosti in 
+    let neporabljene_v_stoplcu = neporabljene (get_column grid c) vse_moznosti in 
+    let neporabljene_v_boxu = neporabljene (get_box grid (box_number loc)) vse_moznosti in
+    match (neporabljene_v_vrstici, neporabljene_v_stoplcu, neporabljene_v_boxu) with
+      |([], _, _) | (_, [], _) | (_, _, []) -> []
+      |([x], _, _) | (_, [x], _) | (_, _, [x]) ->  [x]
+      |_ ->
+      presek_seznamov neporabljene_v_vrstici (presek_seznamov neporabljene_v_stoplcu neporabljene_v_boxu)
+
+(* funkcije za initialize_state *)
 
 
-(* funkcije za dopolnjevanje celic ki imajo samo eno moznost *)
-let dopolni_trivialno_celico (celica : int option) moznosti = 
-  match celica with 
-    |Some x -> Some x 
-    |None -> 
-        match moznosti with 
-          |[x] -> Some x
-          |_ -> None
-
-let rec int_list_to_int_option_list = function 
-  |[] -> [] 
-  |x::xs -> (Some x) :: int_list_to_int_option_list xs
-
-let dopolni_trivialne_resitve grid = 
-  Array.init 9 
-  (fun r -> 
-    Array.init 9 
-    (fun c -> 
-      let celica = grid.(r).(c) in
-      let moznosti = mozne_stevke_v_celici (r, c) grid in
-      dopolni_trivialno_celico celica moznosti
-      )
-    )
-
-(* pomozne funkcije za razvejanje *)
-
-(* popravi funkcijo s tem da uporabis type available *)
-let najdi_celico_z_dvema_moznostma grid =
-  let rec aux (i : int) (j : int ) = 
+let zapisi_seznam_moznosti (grid : int option grid) = 
+  let rec aux (i, j) grid acc =
     let moznosti = mozne_stevke_v_celici (i, j) grid in
-    let st = List.length moznosti in
-    match st with 
-      |2 -> ((i, j), moznosti)
-      |_ -> if j < 7 then aux i (j + 1)  else aux (i + 1) 0
-  in
-  aux 0 0
+    let availabe = {loc = (i, j) ; possible = moznosti} in 
+    if j < 8 then aux (i, (j + 1)) grid (availabe :: acc)  else 
+      if i < 8 then aux ((i + 1), 0) grid (availabe :: acc) else acc 
+    in 
+    aux (0, 0) grid []
 
-(* vzame lokacijo celice kateri zelimo zamenjati stekvo na
- prvem ali drugem mestu seznama moznosti (odlocamo se med dvema, saj zelimo razvejati stanje).
-  vrne unit!! torej samo zamenja in nic ne vrne *)
-let doloci_stevko (r, c) mesto moznosti (grid : int option grid) = match moznosti with 
-    |x::y::[] -> 
-     ( match mesto with 
-        |1 -> (grid.(r).(c) <- Some x )
-        |2 -> (grid.(r).(c) <- Some y )
-        |_ -> failwith "V tej celici imam le dve možnosti, zato izberi 1 ali 2.")
-    |_ -> failwith "Izbirati znam le med dvema možnostma"
+
+let initialize_state (problem : problem) : state =
+  { current_grid = copy_grid problem.initial_grid; problem; moznosti = zapisi_seznam_moznosti (problem.initial_grid)}
+
+let validate_state (state : state) : response =
+  let unsolved =
+    Array.exists (Array.exists Option.is_none) state.current_grid
+  in
+  if unsolved then Unsolved state
+  else
+    (* Option.get ne bo sprožil izjeme, ker so vse vrednosti v mreži oblike Some x *)
+    let solution = map_grid Option.get state.current_grid in
+    if is_valid_solution state.problem solution then Solved solution
+    else Fail state
+
+
+
+(* funkciji ki dolocita vrednost celice *)
 
 let prepisi_na_novo_mesto f grid =
   let grid' = copy_grid grid in
   let () = f grid' in
   grid'
-  
-(* zamenja stevko in vrne mrezo z novim podatkom in s tem ne spremeni stare *)
-let z_doloceno_stevko (r, c) (mesto : int) (moznosti : int list) grid = 
-  prepisi_na_novo_mesto (doloci_stevko (r, c) mesto moznosti) grid 
+let doloci_stevko stevka (i, j) (grid : int option grid) =
+  (grid.(i).(j) <- (Some stevka))
 
-(* ---------------------------------------------------------------------------------------------------------------------------------------------------- *)
+let z_doloceno_stevko stevka (i, j) (grid : int option grid) = 
+  prepisi_na_novo_mesto (doloci_stevko stevka (i, j)) grid
 
+(* ------------------------------------------------------------------------------------ *)
+
+
+(* TODO: Pripravite funkcijo, ki v trenutnem stanju poišče hipotezo, glede katere
+   se je treba odločiti. Če ta obstaja, stanje razveji na dve stanji:
+   v prvem predpostavi, da hipoteza velja, v drugem pa ravno obratno.
+   Če bo vaš algoritem najprej poizkusil prvo možnost, vam morda pri drugi
+   za začetek ni treba zapravljati preveč časa, saj ne bo nujno prišla v poštev. *)
 let branch_state (state : state) : (state * state) option =
-  (* TODO: Pripravite funkcijo, ki v trenutnem stanju poišče hipotezo, glede katere
-     se je treba odločiti. Če ta obstaja, stanje razveji na dve stanji:
-     v prvem predpostavi, da hipoteza velja, v drugem pa ravno obratno.
-     Če bo vaš algoritem najprej poizkusil prvo možnost, vam morda pri drugi
-     za začetek ni treba zapravljati preveč časa, saj ne bo nujno prišla v poštev. *)
-  let grid = state.current_grid in
-  let ((i, j) , moznosti) = najdi_celico_z_dvema_moznostma grid in 
-  let prva_moznost = z_doloceno_stevko (i, j) 1 moznosti grid in
-  let prvo_stanje = {problem = state.problem; current_grid =  prva_moznost} in
-  (* popravi!!! upostevaj predlog iz prejsnjega komentarja - z if stavkom in validate state? *)
-  let druga_moznost = z_doloceno_stevko (i, j) 2 moznosti grid in
-  let drugo_stanje = {problem = state.problem; current_grid =  druga_moznost} in
-  Some (prvo_stanje, drugo_stanje)
+   match state.moznosti with 
+   |[] -> failwith "padem ker je match state.moznosti prazen pri branch state"
+   |x::xs -> 
+    match x.possible with 
+    |[] -> None 
+    |y::ys -> 
+      let new_grid = z_doloceno_stevko y x.loc state.current_grid in 
+      Some (
+      {problem = state.problem;
+      current_grid = new_grid;
+      moznosti = xs},
+      {problem = state.problem;
+      current_grid = (z_doloceno_stevko y x.loc state.current_grid);
+      moznosti = {loc = x.loc; possible = ys} :: xs}
+      )
 
+let dopolni_trivialne_resitve state =
+  let rec aux grid moznosti = 
+    match moznosti with 
+    |[] -> grid
+    |x::xs ->
+      match x.possible with 
+      |[y] -> aux (z_doloceno_stevko y (x.loc) grid) xs
+      |_ -> aux grid xs
+    in 
+  aux state.current_grid state.moznosti
 
 (* pogledamo, če trenutno stanje vodi do rešitve *)
 let rec solve_state (state : state) =
   (* uveljavimo trenutne omejitve in pogledamo, kam smo prišli *)
   (* TODO: na tej točki je stanje smiselno počistiti in zožiti možne rešitve *)
-  let new_grid = dopolni_trivialne_resitve state.current_grid in
-  let new_state = {problem = state.problem; current_grid = new_grid} in 
+  let new_grid = dopolni_trivialne_resitve state in 
+  let new_state = {
+    problem = state.problem;
+    current_grid = new_grid;
+    moznosti = zapisi_seznam_moznosti new_grid
+  }
+ in
   match validate_state new_state with
   | Solved solution ->
       (* če smo našli rešitev, končamo *)
@@ -458,16 +367,16 @@ let rec solve_state (state : state) =
   | Fail fail ->
       (* prav tako končamo, če smo odkrili, da rešitev ni *)
       None
-  | Unsolved state' ->
+  | Unsolved new_state ->
       (* če še nismo končali, raziščemo stanje, v katerem smo končali *)
-      explore_state state'
+      explore_state new_state
 
 and explore_state (state : state) =
   (* pri raziskovanju najprej pogledamo, ali lahko trenutno stanje razvejimo *)
   match branch_state state with
   | None ->
       (* če stanja ne moremo razvejiti, ga ne moremo raziskati *)
-      None
+      (* None *) failwith "padem pri explore state ker je branch state poslal none"
   | Some (st1, st2) -> (
       (* če stanje lahko razvejimo na dve možnosti, poizkusimo prvo *)
       match solve_state st1 with
@@ -480,3 +389,127 @@ and explore_state (state : state) =
 
 let solve_problem (problem : problem) =
   problem |> initialize_state |> solve_state
+
+
+
+
+
+
+(* primeri za pomoč *)
+  let primer_neresen = [|
+    [|None; None; None; Some 6; None; Some 2; None; None; None|];
+    [|Some 4; None; None; None; Some 5; None; None; None; Some 1|];
+    [|None; Some 8; Some 5; None; Some 1; None; Some 6; Some 1; None|];
+    [|None; Some 3; Some 8; Some 2; None; Some 6; Some 7; Some 1; None|];
+    [|None; None; None; None; None; None; None; None; None|];
+    [|None; Some 1; Some 9; Some 4; None; Some 7; Some 3; Some 5; None|];
+    [|None; Some 2; Some 6; None; Some 4; Some 5; Some 3; None; None|];
+    [|Some 9; None; None; None; Some 2; None; None; None; Some 7|];
+    [|None; None; None; Some 8; None; Some 9; None; None; None|]
+    |]
+  let primer_problem = {initial_grid = primer_neresen}
+    (*
+    ┏━━━┯━━━┯━━━┓
+    ┃   │6 2│   ┃
+    ┃4  │ 5 │  1┃
+    ┃ 85│ 1 │62 ┃
+    ┠───┼───┼───┨
+    ┃ 38│2 6│71 ┃
+    ┃   │   │   ┃
+    ┃ 19│4 7│35 ┃
+    ┠───┼───┼───┨
+    ┃ 26│ 4 │53 ┃
+    ┃9  │ 2 │  7┃
+    ┃   │8 9│   ┃
+    ┗━━━┷━━━┷━━━┛ *)
+
+let primer_1_neresen = [|
+[|Some 4; Some 8; Some 3; Some 9; Some 2; Some 1; Some 6; Some 5;  Some 7|];
+[|Some 9; Some 6; Some 7; Some 3; None; Some 5; Some 8; Some 2; Some 1|];
+[|Some 2; Some 5; Some 1; Some 8; Some 7; Some 6; Some 4; Some 9; Some 3|];
+[|Some 5; Some 4; Some 8; Some 1; Some 3; Some 2; Some 9; Some 7;Some 6|];
+[|Some 7; Some 2; Some 9; None; Some 6; Some 4; None; Some 3; Some 8|];
+[|Some 1; Some 3; Some 6; Some 7; Some 9; Some 8; None; Some 4; Some 5|];
+[|Some 3; Some 7; Some 2; Some 6; Some 8; Some 9; Some 5; Some 1;Some 4|];
+[|Some 8; Some 1; Some 4; Some 2; Some 5; Some 3; Some 7; Some 6;Some 9|];
+[|Some 6; Some 9; Some 5; Some 4; Some 1; Some 7; Some 3; Some 8;Some 2|]|]
+
+let primer_1_neresen_int = 
+[|
+  [| 4; 8; 3; 9; 2; 1; 6; 5; 7|];
+  [| 9; 6; 7; 3; 0; 5; 8; 2; 1|];
+  [| 2; 5; 1; 8; 7; 6; 4; 9; 3|];
+  [| 5; 4; 8; 1; 3; 2; 9; 7; 6|];
+  [| 7; 2; 9; 0; 6; 4; 0; 3; 8|];
+  [| 1; 3; 6; 7; 9; 8; 0; 4; 5|];
+  [| 3; 7; 2; 6; 8; 9; 5; 1; 4|];
+  [| 8; 1; 4; 2; 5; 3; 7; 6; 9|];
+  [| 6; 9; 5; 4; 1; 7; 3; 8; 2|]
+|]
+
+
+ let primer_1_problem ={initial_grid = primer_1_neresen}
+
+let primer_1_state = {problem = primer_1_problem; current_grid = primer_1_neresen; moznosti = zapisi_seznam_moznosti primer_1_neresen}
+
+
+let primer_enostaven_solution_int = 
+  [|
+    [|4; 8; 3; 9; 2; 1; 6; 5; 7|];
+    [|9; 6; 7; 3; 4; 5; 8; 2; 1|];
+    [|2; 5; 1; 8; 7; 6; 4; 9; 3|];
+    [|5; 4; 8; 1; 3; 2; 9; 7; 6|];
+    [|7; 2; 9; 5; 6; 4; 1; 3; 8|];
+    [|1; 3; 6; 7; 9; 8; 2; 4; 5|];
+    [|3; 7; 2; 6; 8; 9; 5; 1; 4|];
+    [|8; 1; 4; 2; 5; 3; 7; 6; 9|];
+    [|6; 9; 5; 4; 1; 7; 3; 8; 2|]
+    |]
+
+
+(* primer 2 *)
+
+let primer_2_string = 
+"
+┏━━━┯━━━┯━━━┓
+┃2  │ 8 │3  ┃
+┃ 6 │ 7 │ 84┃
+┃ 3 │5  │2 9┃
+┠───┼───┼───┨
+┃   │1 5│4 8┃
+┃   │   │   ┃
+┃4 2│7 6│   ┃
+┠───┼───┼───┨
+┃3 1│  7│ 4 ┃
+┃72 │ 4 │ 6 ┃
+┃  4│ 1 │  3┃
+┗━━━┷━━━┷━━━┛"
+
+let primer_2_neresen = [|
+[|Some 2 ; None ; None ; None ; Some 8 ; None ; Some 3 ; None ;  None |];
+[|None ; Some 6 ; None ; None ; Some 7; None ; None ; Some 8 ; Some 4 |];
+[|None ; Some 3 ; None ; Some 5 ; None ; None ; Some 2 ; None ; Some 9 |];
+[|None ; None ; None ; Some 1 ; None ; Some 5 ; Some 4 ; None ;Some 8 |];
+[|None ; None ; None ; None; None ; None ; None; None ; None |];
+[|Some 4 ; None ; Some 2 ; Some 7 ; None ; Some 6 ; None; None ; None |];
+[|Some 3 ; None ; Some 1 ; None ; None ; Some 7 ; None ; Some 4 ;None |];
+[|Some 7 ; Some 2 ; None ; None ; Some 4 ; None ; None ; Some 6 ;None |];
+[|None ; None ; Some 4 ; None ; Some 1 ; None ; None ; None ;Some 3 |]|]
+let primer_2_problem = {initial_grid = primer_2_neresen}
+
+let primer_2_state = {
+  problem = primer_2_problem;
+  current_grid = primer_2_neresen;
+  moznosti = zapisi_seznam_moznosti primer_2_neresen
+}
+let primer_2_trivialen = 
+[|
+[|Some 2; None; None; None; Some 8; None; Some 3; None; None|];
+[|None; Some 6; None; None; Some 7; None; None; Some 8; Some 4|];
+[|None; Some 3; None; Some 5; Some 6; None; Some 2; None; Some 9|];
+[|None; None; None; Some 1; None; Some 5; Some 4; None; Some 8|];
+[|None; None; None; None; None; None; None; None; None|];
+[|Some 4; None; Some 2; Some 7; None; Some 6; None; None; None|];
+[|Some 3; None; Some 1; None; None; Some 7; None; Some 4; None|];
+[|Some 7; Some 2; None; None; Some 4; None; None; Some 6; None|];
+[|None; None; Some 4; None; Some 1; None; None; None; Some 3|]|] 
