@@ -42,7 +42,7 @@ let razlika_seznamov l1 l2 =
 let presek_seznamov l1 l2 =
   razlika_seznamov (razlika_seznamov l1 l2) l2 
 
-(* nam vrne seznam števk ki v tistme stolpcu/vrstici/boxu še niso porabljene *)
+(* nam vrne seznam števk ki v tistem stolpcu/vrstici/boxu še niso porabljene *)
 let neporabljene (arr : int option Array.t) (moznosti : int list) =
   let porabljene = int_option_list_to_int_list (Array.to_list arr) in
   razlika_seznamov porabljene moznosti
@@ -76,19 +76,33 @@ let mozne_stevke_v_celici ((r, c) as loc) grid =
 
 (* funkcije za initialize_state *)
 
+let uredi_po_dolzini (list : available list) =
+  let razdalja x y = List.length x.possible - List.length y.possible in 
+  List.sort razdalja list
 
 let zapisi_seznam_moznosti (grid : int option Model.grid) = 
   let rec aux (i, j) grid acc =
-    let moznosti = mozne_stevke_v_celici (i, j) grid in
-    let availabe = {loc = (i, j) ; possible = moznosti} in 
-    if j < 8 then aux (i, (j + 1)) grid (availabe :: acc)  else 
-      if i < 8 then aux ((i + 1), 0) grid (availabe :: acc) else acc 
-    in 
-    aux (0, 0) grid []
-
-
-let initialize_state (problem : Model.problem) : state =
-  { current_grid = Model.copy_grid problem.initial_grid; problem; moznosti = zapisi_seznam_moznosti (problem.initial_grid)}
+    match grid.(i).(j) with 
+    |Some x ->
+      (
+      if (i, j) = (8, 8) then acc
+      else
+          if j < 8 then aux (i, (j + 1)) grid acc else 
+          if i < 8 then aux ((i + 1), 0) grid acc else acc
+      )
+    |None -> 
+      (
+      let moznosti = mozne_stevke_v_celici (i, j) grid in
+      let available = {loc = (i, j) ; possible = moznosti} in
+      (
+        if (i, j) = (8, 8) then (available :: acc)
+        else
+            if j < 8 then aux (i, (j + 1)) grid (available :: acc) else 
+            if i < 8 then aux ((i + 1), 0) grid (available :: acc) else acc
+        )
+      )
+  in 
+  uredi_po_dolzini (aux (0, 0) grid [])
 
 let validate_state (state : state) : response =
   let unsolved =
@@ -100,7 +114,6 @@ let validate_state (state : state) : response =
     let solution = Model.map_grid Option.get state.current_grid in
     if Model.is_valid_solution state.problem solution then Solved solution
     else Fail state
-
 
 
 (* funkciji ki dolocita vrednost celice *)
@@ -117,29 +130,6 @@ let z_doloceno_stevko stevka (i, j) (grid : int option Model.grid) =
 
 (* ------------------------------------------------------------------------------------ *)
 
-
-(* TODO: Pripravite funkcijo, ki v trenutnem stanju poišče hipotezo, glede katere
-   se je treba odločiti. Če ta obstaja, stanje razveji na dve stanji:
-   v prvem predpostavi, da hipoteza velja, v drugem pa ravno obratno.
-   Če bo vaš algoritem najprej poizkusil prvo možnost, vam morda pri drugi
-   za začetek ni treba zapravljati preveč časa, saj ne bo nujno prišla v poštev. *)
-let branch_state (state : state) : (state * state) option =
-   match state.moznosti with 
-   |[] -> failwith "padem ker je match state.moznosti prazen pri branch state"
-   |x::xs -> 
-    match x.possible with 
-    |[] -> None 
-    |y::ys -> 
-      let new_grid = z_doloceno_stevko y x.loc state.current_grid in 
-      Some (
-      {problem = state.problem;
-      current_grid = new_grid;
-      moznosti = xs},
-      {problem = state.problem;
-      current_grid = (z_doloceno_stevko y x.loc state.current_grid);
-      moznosti = {loc = x.loc; possible = ys} :: xs}
-      )
-
 let dopolni_trivialne_resitve state =
   let rec aux grid moznosti = 
     match moznosti with 
@@ -149,36 +139,76 @@ let dopolni_trivialne_resitve state =
       |[y] -> aux (z_doloceno_stevko y (x.loc) grid) xs
       |_ -> aux grid xs
     in 
-  aux state.current_grid state.moznosti
+  let new_grid = aux state.current_grid state.moznosti in
+    {
+    problem = state.problem;
+    current_grid = new_grid;
+    moznosti = zapisi_seznam_moznosti new_grid
+    }
+
+let pocisti state = 
+  let rec aux original =
+    match original.moznosti with 
+    |[] -> original
+    |x::xs -> 
+      match x.possible with 
+      |[a] -> aux (dopolni_trivialne_resitve original)
+      |_ -> original
+    in 
+    aux state
+
+let initialize_state (problem : Model.problem) : state =
+  pocisti {current_grid = Model.copy_grid problem.initial_grid; problem = problem; moznosti = zapisi_seznam_moznosti (problem.initial_grid)}
+
+(* v trenutnem stanju poišče hipotezo, glede katere
+   se je treba odločiti. Če ta obstaja, stanje razveji na dve stanji:
+   v prvem predpostavi, da hipoteza velja, v drugem pa ravno obratno.
+   Če bo vaš algoritem najprej poizkusil prvo možnost, vam morda pri drugi
+   za začetek ni treba zapravljati preveč časa, saj ne bo nujno prišla v poštev. *)
+
+let branch_state (state : state) : (state * state) option =
+  match state.moznosti with 
+  |[] -> None
+  |x::xs -> 
+   match x.possible with 
+   |[] -> None
+   |y::ys ->
+    let new_grid = (z_doloceno_stevko y x.loc state.current_grid) in 
+    let first = {
+      problem = state.problem;
+      current_grid = new_grid;
+      moznosti = (zapisi_seznam_moznosti (new_grid))
+     }
+    in 
+    let second = {
+      problem = state.problem;
+      current_grid = state.current_grid;
+      moznosti = {loc = x.loc; possible = ys} :: xs
+    }
+  in 
+  Some  (pocisti first, pocisti second)
+
 
 (* pogledamo, če trenutno stanje vodi do rešitve *)
 let rec solve_state (state : state) =
   (* uveljavimo trenutne omejitve in pogledamo, kam smo prišli *)
-  (* TODO: na tej točki je stanje smiselno počistiti in zožiti možne rešitve *)
-  let new_grid = dopolni_trivialne_resitve state in 
-  let new_state = {
-    problem = state.problem;
-    current_grid = new_grid;
-    moznosti = zapisi_seznam_moznosti new_grid
-  }
- in
-  match validate_state new_state with
+  match validate_state state with
   | Solved solution ->
       (* če smo našli rešitev, končamo *)
       Some solution
   | Fail fail ->
       (* prav tako končamo, če smo odkrili, da rešitev ni *)
       None
-  | Unsolved new_state ->
+  | Unsolved state ->
       (* če še nismo končali, raziščemo stanje, v katerem smo končali *)
-      explore_state new_state
+      explore_state state
 
 and explore_state (state : state) =
   (* pri raziskovanju najprej pogledamo, ali lahko trenutno stanje razvejimo *)
   match branch_state state with
   | None ->
       (* če stanja ne moremo razvejiti, ga ne moremo raziskati *)
-      (* None *) failwith "padem pri explore state ker je branch state poslal none"
+      None
   | Some (st1, st2) -> (
       (* če stanje lahko razvejimo na dve možnosti, poizkusimo prvo *)
       match solve_state st1 with
