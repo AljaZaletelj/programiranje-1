@@ -58,7 +58,7 @@ let rec optimal_path_bottom matrix =
       in
       (* desno *)
       let max_dol, pot_dol = 
-         if vrs < Array.length matrix.(0) then 
+         if vrs + 1 < Array.length matrix.(0) then 
                let best, pot = aux (vrs + 1) stol in 
                best, pot 
          else 
@@ -69,8 +69,6 @@ let rec optimal_path_bottom matrix =
    in
    let (_, pot) = aux 0, 0 in 
    pot
-
-
 
 
 (* d(x,y) = max d(x+1, y) d(x, y+1) + neveljavne stvari *)
@@ -92,6 +90,32 @@ let rec optimal_path_bottom matrix =
  - : int = 35
 [*----------------------------------------------------------------------------*)
 
+let rec neki x = 
+   neki2 (x - 3)
+   and neki2 x = 
+      neki (x - 2)
+
+
+(* 
+koliko moznosti da se konca z rdecimi   modrimi 
+                           0     0        0
+                           1     1        0
+                           2     1        1  
+                           3     1        2
+                           4
+
+*)
+
+
+let alternating_towers n = 
+   let rec konec_rdeca h = 
+      if h = 0 then 0 else if h <= 2 then 1 else 
+         (konec_modra h - 1) + (konec_modra h - 2)
+   and konec_modra h = 
+      if h <= 1 then 0 else if h <= 3 then h-1 else
+         (konec_rdeca h - 2) + (konec_rdeca h - 3)
+   in 
+   (konec_modra n) + (konec_rdeca n)
 
 
 (*----------------------------------------------------------------------------*]
