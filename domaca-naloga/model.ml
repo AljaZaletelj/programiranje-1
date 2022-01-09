@@ -143,15 +143,10 @@ let int_option_to_int = function
   |Some digit -> digit
   |None -> 0
 
-(* pomozne funkcije za is_valid_solution, !popravi vse funkcije za option int *)
-
+(* pomozne funkcije za is_valid_solution*)
 let preveri_1_do_9 (seznam : int list) = match seznam with 
   |[] -> false
   |x::xs -> (List.sort compare seznam) = [1;2;3;4;5;6;7;8;9]
-
-let grid_to_list_list (grid : int grid) =  
-  let big_list = Array.to_list grid in 
-  List.map (Array.to_list) big_list
 
 let rec preveri_sezname seznam_seznamov =
   List.for_all (preveri_1_do_9) seznam_seznamov
@@ -172,8 +167,7 @@ let preveri_istolezne_komponente (mat1 : int array array) (mat2 : int array arra
   in 
   aux (0, 0) mat1 mat2
 
-
-(* mora preveriti da ima vsaka vrstica/stolp/box 1-9 in da ima podane stevke na istem mestu kot original *)
+(*preveriti da ima vsaka vrstica/stolp/box vse števke 1-9 in da so vse zapolnjene celice originala enake tistim v rešitvi *)
 let is_valid_solution problem (solution : int array array) =
   let original = (problem.initial_grid |> map_grid int_option_to_int) in
   match preveri_istolezne_komponente original solution  with 
@@ -191,95 +185,3 @@ let is_valid_solution problem (solution : int array array) =
                     match preveri_sezname (List.map Array.to_list skatle) with 
                       |false -> false 
                       |true -> true
-
-
-            
-
-
-                      
- (*
-
-primeri za pomoč 
-
-let primer_1_neresen = [|
-[|Some 4; Some 8; Some 3; Some 9; Some 2; Some 1; Some 6; Some 5;  Some 7|];
-[|Some 9; Some 6; Some 7; Some 3; None; Some 5; Some 8; Some 2; Some 1|];
-[|Some 2; Some 5; Some 1; Some 8; Some 7; Some 6; Some 4; Some 9; Some 3|];
-[|Some 5; Some 4; Some 8; Some 1; Some 3; Some 2; Some 9; Some 7;Some 6|];
-[|Some 7; Some 2; Some 9; None; Some 6; Some 4; None; Some 3; Some 8|];
-[|Some 1; Some 3; Some 6; Some 7; Some 9; Some 8; None; Some 4; Some 5|];
-[|Some 3; Some 7; Some 2; Some 6; Some 8; Some 9; Some 5; Some 1;Some 4|];
-[|Some 8; Some 1; Some 4; Some 2; Some 5; Some 3; Some 7; Some 6;Some 9|];
-[|Some 6; Some 9; Some 5; Some 4; Some 1; Some 7; Some 3; Some 8;Some 2|]|]
-
-let primer_1_neresen_int = 
-[|
-  [| 4; 8; 3; 9; 2; 1; 6; 5; 7|];
-  [| 9; 6; 7; 3; 0; 5; 8; 2; 1|];
-  [| 2; 5; 1; 8; 7; 6; 4; 9; 3|];
-  [| 5; 4; 8; 1; 3; 2; 9; 7; 6|];
-  [| 7; 2; 9; 0; 6; 4; 0; 3; 8|];
-  [| 1; 3; 6; 7; 9; 8; 0; 4; 5|];
-  [| 3; 7; 2; 6; 8; 9; 5; 1; 4|];
-  [| 8; 1; 4; 2; 5; 3; 7; 6; 9|];
-  [| 6; 9; 5; 4; 1; 7; 3; 8; 2|]
-|]
-
- let primer_1_problem = {initial_grid = primer_1_neresen}
-
-let primer_1_state = {problem = primer_1_problem; current_grid = primer_1_neresen; moznosti = zapisi_seznam_moznosti primer_1_neresen}
-
-let primer_1_resen = 
-  [|
-    [|Some 4; Some 8; Some 3; Some 9; Some 2; Some 1; Some 6; Some 5; Some 7|];
-    [|Some 9; Some 6; Some 7; Some 3; Some 4; Some 5; Some 8; Some 2; Some 1|];
-    [|Some 2; Some 5; Some 1; Some 8; Some 7; Some 6; Some 4; Some 9; Some 3|];
-    [|Some 5; Some 4; Some 8; Some 1; Some 3; Some 2; Some 9; Some 7; Some 6|];
-    [|Some 7; Some 2; Some 9; Some 5; Some 6; Some 4; Some 1; Some 3; Some 8|];
-    [|Some 1; Some 3; Some 6; Some 7; Some 9; Some 8; Some 2; Some 4; Some 5|];
-    [|Some 3; Some 7; Some 2; Some 6; Some 8; Some 9; Some 5; Some 1; Some 4|];
-    [|Some 8; Some 1; Some 4; Some 2; Some 5; Some 3; Some 7; Some 6; Some 9|];
-    [|Some 6; Some 9; Some 5; Some 4; Some 1; Some 7; Some 3; Some 8; Some 2|]
-    |]
-
-
-(* primer 2 *)
-
-let primer_2_string = 
-"
-┏━━━┯━━━┯━━━┓
-┃2  │ 8 │3  ┃
-┃ 6 │ 7 │ 84┃
-┃ 3 │5  │2 9┃
-┠───┼───┼───┨
-┃   │1 5│4 8┃
-┃   │   │   ┃
-┃4 2│7 6│   ┃
-┠───┼───┼───┨
-┃3 1│  7│ 4 ┃
-┃72 │ 4 │ 6 ┃
-┃  4│ 1 │  3┃
-┗━━━┷━━━┷━━━┛"
-
-let primer_2_neresen = [|
-[|Some 2 ; None ; None ; None ; Some 8 ; None ; Some 3 ; None ;  None |];
-[|None ; Some 6 ; None ; None ; Some 7; None ; None ; Some 8 ; Some 4 |];
-[|None ; Some 3 ; None ; Some 5 ; None ; None ; Some 2 ; None ; Some 9 |];
-[|None ; None ; None ; Some 1 ; None ; Some 5 ; Some 4 ; None ;Some 8 |];
-[|None ; None ; None ; None; None ; None ; None; None ; None |];
-[|Some 4 ; None ; Some 2 ; Some 7 ; None ; Some 6 ; None; None ; None |];
-[|Some 3 ; None ; Some 1 ; None ; None ; Some 7 ; None ; Some 4 ;None |];
-[|Some 7 ; Some 2 ; None ; None ; Some 4 ; None ; None ; Some 6 ;None |];
-[|None ; None ; Some 4 ; None ; Some 1 ; None ; None ; None ;Some 3 |]|]
-let primer_2_problem = {initial_grid = primer_2_neresen}
-
-let s = initialize_state primer_2_problem
-
-let primer_2_state = {
-  problem = primer_2_problem;
-  current_grid = primer_2_neresen;
-  moznosti = zapisi_seznam_moznosti primer_2_neresen
-}
-
- *)
-

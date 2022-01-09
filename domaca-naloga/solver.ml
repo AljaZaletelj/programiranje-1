@@ -1,10 +1,6 @@
 type available = { loc : int * int; possible : int list } 
 
-(* TODO: tip stanja ustrezno popravite, saj boste med reševanjem zaradi učinkovitosti
-   želeli imeti še kakšno dodatno informacijo *)
-
 type state = { problem : Model.problem; current_grid : int option Model.grid;  mutable moznosti : available list}
-
 
 let print_state (state : state) : unit =
   Model.print_grid
@@ -13,13 +9,10 @@ let print_state (state : state) : unit =
 
 type response = Solved of Model.solution | Unsolved of state | Fail of state
 
-
-(* ------------pomožne funkcije za iskanje možnsti v celici----------------------------------------------- *)
+(* pomožne funkcije za iskanje možnosti v celici *)
 let rec remove elt list = match list with
   |x::xs -> if x = elt then remove elt xs else x :: remove elt xs
   |[] -> []
-
-let vse_moznosti = [1;2;3;4;5;6;7;8;9]
 
 let int_option_list_to_int_list (list : int option list) = 
   let rec aux acc lst = match lst with 
@@ -31,7 +24,7 @@ let int_option_list_to_int_list (list : int option list) =
   in
   aux [] list
 
-(* l2 brez l1 *)
+(* zapiše nov seznam: l2 brez l1 *)
 let razlika_seznamov l1 l2 = 
   let rec aux razlika list1 list2 = match list1 with
     |[] -> razlika
@@ -39,6 +32,7 @@ let razlika_seznamov l1 l2 =
   in
   aux l2 l1 l2
 
+(* zapiše nov seznam v katerem so le elementi ki nastopajo v obeh podanih *)
 let presek_seznamov l1 l2 =
   razlika_seznamov (razlika_seznamov l1 l2) l2 
 
@@ -47,7 +41,7 @@ let neporabljene (arr : int option Array.t) (moznosti : int list) =
   let porabljene = int_option_list_to_int_list (Array.to_list arr) in
   razlika_seznamov porabljene moznosti
 
-(* pomozne funkcije za racunanje stevilke boxa *)
+(* pomožne funkcije za računanje številke boxa *)
 let row_level row_ind = match row_ind with
   |0|1|2 -> 0
   |3|4|5 -> 3
@@ -60,6 +54,9 @@ let col_level col_ind = match col_ind with
   |_ -> failwith "That column does not exist"
 let box_number (r, c) =
   (row_level r) + (col_level c)
+
+(* za celico sudokuja zapiše vse števke med katerimi lahko izbiramo *)
+let vse_moznosti = [1;2;3;4;5;6;7;8;9]
 
 let mozne_stevke_v_celici ((r, c) as loc) grid =
   match grid.(r).(c) with 
@@ -74,12 +71,14 @@ let mozne_stevke_v_celici ((r, c) as loc) grid =
       |_ ->
       presek_seznamov neporabljene_v_vrstici (presek_seznamov neporabljene_v_stoplcu neporabljene_v_boxu)
 
-(* funkcije za initialize_state *)
+(* pomožne funkcije za initialize_state *)
 
+(* uredi seznam tipov available tako, da imamo na začetku tiste ki pripadajo celici z najmanj možnimi števkami *)
 let uredi_po_dolzini (list : available list) =
   let razdalja x y = List.length x.possible - List.length y.possible in 
   List.sort razdalja list
 
+(* zapiše že urejen seznam možnosti števk (za nezapolnjene celice) za trenutno mrežo sudokuja *)
 let zapisi_seznam_moznosti (grid : int option Model.grid) = 
   let rec aux (i, j) grid acc =
     match grid.(i).(j) with 
@@ -115,8 +114,7 @@ let validate_state (state : state) : response =
     if Model.is_valid_solution state.problem solution then Solved solution
     else Fail state
 
-
-(* funkciji ki dolocita vrednost celice *)
+(* funkcije za določanje števke v določeni celici *)
 
 let prepisi_na_novo_mesto f grid =
   let grid' = Model.copy_grid grid in
@@ -128,8 +126,7 @@ let doloci_stevko stevka (i, j) (grid : int option Model.grid) =
 let z_doloceno_stevko stevka (i, j) (grid : int option Model.grid) = 
   prepisi_na_novo_mesto (doloci_stevko stevka (i, j)) grid
 
-(* ------------------------------------------------------------------------------------ *)
-
+(* dopolni tisti celice ki imajo le eno možno števko *)
 let dopolni_trivialne_resitve state =
   let rec aux grid moznosti = 
     match moznosti with 
@@ -146,6 +143,7 @@ let dopolni_trivialne_resitve state =
     moznosti = zapisi_seznam_moznosti new_grid
     }
 
+(* počisti stanje, tako za dopolnjuje trivialne rešitve dokler nimajo vse celice vsaj dveh možnosti *)
 let pocisti state = 
   let rec aux original =
     match original.moznosti with 
@@ -187,7 +185,6 @@ let branch_state (state : state) : (state * state) option =
     }
   in 
   Some  (pocisti first, pocisti second)
-
 
 (* pogledamo, če trenutno stanje vodi do rešitve *)
 let rec solve_state (state : state) =
