@@ -181,6 +181,15 @@ let succ tree = match tree with
      |Prazno -> None
      |Sestavljeno(_, _, r) -> minimal r
 
+let rec maximal tree = match tree with 
+     |Prazno -> None 
+     |Sestavljeno(_, x, Prazno) -> Some x 
+     |Sestavljeno(_, _ , d) -> maximal d
+
+let rec pred tree = match tree with 
+     |Prazno -> None
+     |Sestavljeno(l, _ , _) -> maximal l
+
 (*----------------------------------------------------------------------------*]
  Na predavanjih ste omenili dva načina brisanja elementov iz drevesa. Prvi 
  uporablja [succ], drugi pa [pred]. Funkcija [delete x bst] iz drevesa [bst] 
@@ -228,6 +237,9 @@ type ('key, 'value) slovar = ('key * 'value) tree
      "c":-2
 [*----------------------------------------------------------------------------*)
 
+let l = leaf ("a", 0)
+let d = Sestavljeno(leaf ("c", - 2), ("d", 2), Prazno)
+let test_dict = Sestavljeno(l, ("b", 1), d)
 
 (*----------------------------------------------------------------------------*]
  Funkcija [dict_get key dict] v slovarju poišče vrednost z ključem [key]. Ker
@@ -265,7 +277,14 @@ let rec dict_get key dict = match dict with
  - : unit = ()
 [*----------------------------------------------------------------------------*)
 
-let () = Printf.printf "%d %s \n" 15 "hhh"
+(* let () = Printf.printf "%d %s \n" 15 "hhh" *)
+
+let rec print_dict = function
+  | Prazno -> ()
+  | Sestavljeno (l, (k, v), r) -> (
+      print_dict l;
+      print_string (k ^ " : "); print_int v; print_newline ();
+      print_dict r)
 
 (*----------------------------------------------------------------------------*]
  Funkcija [dict_insert key value dict] v slovar [dict] pod ključ [key] vstavi
@@ -285,4 +304,10 @@ let () = Printf.printf "%d %s \n" 15 "hhh"
  d : 2
  - : unit = ()
 [*----------------------------------------------------------------------------*)
+
+let rec dict_insert key value dict = match dict with 
+     |Prazno -> leaf (key, value)
+     |Sestavljeno(l, (k, v), d) when key = k -> Sestavljeno (l, (k, value), d)
+     |Sestavljeno(l, (k, v), d) when key < k -> Sestavljeno (dict_insert key value l, (k, v) , d)
+     |Sestavljeno(l, (k, v), d) (*when key > k *) -> Sestavljeno (l , (k, v) , dict_insert key value d) 
 

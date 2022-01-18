@@ -11,11 +11,77 @@ from functools import lru_cache
 # podzaporedje `[2, 3, 4, 4, 6, 7, 8, 9]`.
 # -----------------------------------------------------------------------------
 
+# def najdaljse_narascajoce_podzaporedje(zap):
+#     #najdaljse zaporedje, ki se zacne na indeksu i, kjer lahko jemljemo samo stevila vecja od z_s
+#     def inner(zadnja_stevilka, index):
+#         #tukaj itak ni vec zaporedja
+#         if index >= len(zap) :
+#             return []
+#         if zap[index] >= zadnja_stevilka:
+#             #lahko vzamemo trenutno stevilo
+#             vzamemo = inner(zap[index], index + 1)
+#             ne_vzamemo = inner(zadnja_stevilka, index + 1)
+#             if len(vzamemo) >= len(ne_vzamemo): 
+#                 return vzamemo 
+#         else: 
+#             #ne vzmamemo ga
+#             return inner(zadnja_stevilka, index + 1)
+#     #lahko bi vzeli -\infinity
+#     return inner(zap[0], 0)
+
+
+def najdaljse_narascajoce_podzaporedje(sez):
+    @lru_cache
+    def najdaljse(spodnja_meja, i):
+        # i označuje indeks trenutnega elementa
+        if i >= len(sez):
+            return []
+        elif sez[i] < spodnja_meja:
+            # Neprimeren element, preskočimo
+            return najdaljse(spodnja_meja, i + 1)
+        else:
+            # Razvejitev in agregacija glede na dolžino
+            z_prvim = [sez[i]] + najdaljse(sez[i], i + 1)
+            brez_prvega = najdaljse(spodnja_meja, i + 1)
+            if len(z_prvim) > len(brez_prvega):
+                return z_prvim
+            else:
+                return brez_prvega
+    return najdaljse(float("-inf"), 0)
+
+
+
+
+
 # -----------------------------------------------------------------------------
 # Rešitev sedaj popravite tako, da funkcija `vsa_najdaljsa` vrne seznam vseh
 # najdaljših naraščajočih podzaporedij.
 # -----------------------------------------------------------------------------
 
+
+def vsa_najdaljsa(sez):
+    # dodatno vračamo dolžino zaporedij v množici
+
+    @lru_cache
+    def najdaljse(spodnja_meja, i):
+        # i označuje indeks trenutnega elementa
+        if i >= len(sez):
+            return (0, [[]])
+        elif sez[i] < spodnja_meja:
+            # Neprimeren element, preskočimo
+            return najdaljse(spodnja_meja, i + 1)
+        else:
+            d_z, zap_z = najdaljse(sez[i], i + 1)  # tem moramo še dodati člen
+            d_brez, zap_brez = najdaljse(spodnja_meja, i + 1)
+            if d_z+1 > d_brez:
+                # moramo še dodati element
+                return (d_z+1, [[sez[i]]+zap for zap in zap_z])
+            elif d_z+1 < d_brez:
+                return (d_brez, zap_brez)
+            else:
+                return (d_brez, [[sez[i]]+zap for zap in zap_z] + zap_brez)
+
+    return najdaljse(float("-inf"), 0)[1]
 
 
 # =============================================================================
@@ -42,6 +108,35 @@ from functools import lru_cache
 # treh skokih, v močvari `[4, 1, 8, 2, 11, 1, 1, 1, 1, 1]` pa potrebuje zgolj
 # dva.
 # =============================================================================
+
+# moj poskus
+# def zabica(mocvara):
+#     @lru_cache
+#     def inner(preostala_pot, trenutna_energija):
+#         moznosti = []
+#         for d in range (trenutna_energija + 1):
+#             if d >= len(preostala_pot):
+#                 return moznosti 
+#             else:
+#                 energija = (trenutna_energija - 1 + preostala_pot[d])
+#                 moznosti.append(inner(preostala_pot[d:], energija))
+    
+#     poti = inner(mocvara, mocvara[0])
+#     skoki = []
+#     for i in poti:
+#         skoki.append(len(i))
+#     return min(skoki)
+
+
+def zabica(mocvara):
+    @lru_cache
+    def pobeg(k, e):
+        if k >= len(mocvara):
+            return 0
+        else:
+            e += mocvara[k]
+            return 1 + min([pobeg(k + d, e - d) for d in range(1, e + 1)])
+    return pobeg(0, 0)
 
 
 
@@ -74,6 +169,43 @@ def nageljni_stevilo(n, m, l):
         return 0 
     else: 
         return nageljni_stevilo(n-1, m, l) + nageljni_stevilo(n-l-1, m-1, l)
+
+# @lru_cache
+# def nageljni(sirina_balkona, st_korit, sirina_korit):
+#     st_roz = nageljni_stevilo(sirina_balkona, st_korit, sirina_korit)
+#     balkon = [0 for _ in range (sirina_balkona)]
+#     korito = [1 for _ in range(sirina_korit)]
+#     moznosti = []
+
+#     def inner(trenutni_balkon, st_korit, sirina_korit):
+#         for i in range (sirina_korit):
+#             if i > len(trenutni_balkon) :
+#                 return moznosti.append(trenutni_balkon)
+#             else:
+#                 nov_balkon = [0 for _ in range (i)] + korito + inner(trenutni_balkon[i:], st_korit - 1, sirina_korit)
+#                 moznosti.append(nov_balkon)
+
+#     return inner(balkon, st_korit, sirina_korit)
+
+
+@lru_cache
+def nageljni(n, m, l):
+    if m <= 0:
+        return [[0 for _ in range(n)]]
+    elif n < l:
+        return []
+    elif n == l and m == 1:
+        # zapolnimo do potankosti
+        # dodan kot robni primer, da lahko v naslednji opciji vedno dodamo 0
+        # na desno stran korita
+        return [[1 for _ in range(n)]]
+    else:
+        ne_postavimo = [[0] + postavitev for postavitev in nageljni(n-1, m, l)]
+        postavimo = \
+            [[1 for _ in range(l)] + [0] + postavitev
+             for postavitev in nageljni(n-l-1, m-1, l)]
+        return postavimo + ne_postavimo
+
 
 
 
@@ -120,7 +252,28 @@ def nageljni_stevilo(n, m, l):
 # seznam indeksov mest, v katerih se Mortimer ustavi.
 # =============================================================================
 
+def pobeg(zemljevid):
+    koncno_mesto = len(zemljevid)
 
+    @lru_cache
+    def inner(i, denar):
+        if i >= koncno_mesto and denar >= 0:
+            return [i]
+        elif i >= koncno_mesto:
+            return None 
+        else:
+            moznosti = []
+            for (skok, stroski) in zemljevid[i]:
+                beg = inner(i + skok, denar + stroski)
+                if beg is not None:
+                   moznosti.append(beg)
+            if len(moznosti) == 0:
+                return None 
+            else:
+                return [i] + sorted(moznosti, key=len)[0]
+                
+    return pobeg(0, 0)
+                
 
 # =============================================================================
 # Pričetek robotske vstaje
@@ -158,7 +311,8 @@ def nageljni_stevilo(n, m, l):
 # medtem ko iz vrste 5 in stolpca 0 ne more pobegniti.
 # =============================================================================
 
-def pobeg(soba, vrsta, stolpec, koraki):
+
+def ali_je_mozen_pobeg(soba, vrsta, stolpec, koraki):
     max_vrsta = len(soba)
     max_stolpec = len(soba[0])
 
@@ -181,3 +335,28 @@ def pobeg(soba, vrsta, stolpec, koraki):
         else:
             return False
     return pobegni(vrsta, stolpec, koraki)
+
+
+def pot_pobega(soba, vrsta, stolpec, koraki):
+    max_vrstica = len(soba)
+    max_stolpec = len(soba[0])
+
+    @lru_cache 
+    def pobeg(v, s, k):
+        if not (0 <= v < max_vrstica) or (0 <= s < max_stolpec) or (soba[v][s] == 2) or (k <= 0):
+            None 
+        elif soba[v][s] == 1:
+            []
+        else:
+            moznosti = [
+                ("gor"), pobeg(v - 1, s, k - 1)
+                ("dol"), pobeg(v + 1, s, k - 1)
+                ("desno"), pobeg(v, s + 1, k - 1)
+                ("levo"), pobeg(v, s - 1, k - 1)
+                ]
+            uspesne = [(smer, pot) for (smer, pot) in moznosti if pot is not None]
+            if uspesne:
+                return [uspesne[0][0]] + uspesne[0][1]  # [smer] + pot
+
+    pobeg(vrsta, stolpec, koraki)
+        

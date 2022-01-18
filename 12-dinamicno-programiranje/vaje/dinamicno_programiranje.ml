@@ -169,3 +169,32 @@ type tower = Red of red_tower | Blue of blue_tower
 [*----------------------------------------------------------------------------*)
 
 let test_shelf = [1;2;-5;3;7;19;-30;1;0]
+
+let rec ham_ham list k = 
+   let rec skip k sweets skips = 
+      match k, sweets with 
+         |0, _ -> sweets, skips 
+         |k, [] -> [], skips 
+         |k, s::sws -> (skip (k - 1) sws (false :: skips))
+   in 
+   let rec nom_nom = function 
+      |[] -> 0, []
+      |s :: sws -> 
+         let nom = 
+            let sws_after_skip, skips = skip k sws [] in 
+            let v_nom, instr_nom = nom_nom sws_after_skip in 
+            v_nom + s, true :: skips @ instr_nom
+         in 
+         let no_nom = 
+            let v_no_nom, inst_no_nom = nom_nom sws in 
+            v_no_nom, false :: inst_no_nom 
+         in 
+         max nom no_nom
+   in
+   let v_opt, instr_opt = nom_nom list in 
+instr_opt
+   
+
+
+
+

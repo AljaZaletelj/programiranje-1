@@ -92,7 +92,18 @@ def kth_element(a, k):
 ###############################################################################
 
 def quicksort_part(a, start, end):
-    pass
+    if start >= end:
+        return a
+    else:
+        pivot_i = pivot(a, start, end)
+        quicksort_part(a, start, pivot_i - 1)
+        quicksort_part(a, pivot_i + 1, end)
+        return a
+
+
+def quicksort(a):
+    quicksort_part(a, 0, len(a) - 1)
+    return a
 
 ###############################################################################
 # Če imamo dve urejeni tabeli, potem urejeno združeno tabelo dobimo tako, da
@@ -117,23 +128,38 @@ def quicksort_part(a, start, end):
 #
 ###############################################################################
 
-def merge(target, l1, l2):
-    i1 = 0
-    i2 = 0
-    while i1 < len(l1) and i2 < len(l2):
-        if l1[i1] <= l2[i2]:
-            target[i1 + i1] = l1[i1]
+# iz vaj
+# def merge(target, l1, l2):
+#     i1 = 0
+#     i2 = 0
+#     while i1 < len(l1) and i2 < len(l2):
+#         if l1[i1] <= l2[i2]:
+#             target[i1 + i1] = l1[i1]
+#             i1 += 1
+#         else:
+#             target[i1 + i1] = l2[i2]
+#             i2 += 1
+#     while i1 < len(l1):
+#         target[i1 + i1] = l1[i1]
+#         i1 += 1
+#     while i2 < len(l2):
+#         target[i1 + i2] = l2[i2]
+#         i2 += 1
+#     return target
+
+
+
+def merge(target, list1, list2):
+    # We assume lenghts of list1 and list2 exactly add up to that of target
+    i1, i2 = 0, 0
+    for j in range(len(target)):
+        if (i2 >= len(list2)) or (i1 < len(list1) and list1[i1] <= list2[i2]):
+            target[j] = list1[i1]
             i1 += 1
         else:
-            target[i1 + i1] = l2[i2]
+            target[j] = list2[i2]
             i2 += 1
-    while i1 < len(l1):
-        target[i1 + i1] = l1[i1]
-        i1 += 1
-    while i2 < len(l2):
-        target[i1 + i2] = l2[i2]
-        i2 += 1
-    return target
+    return
 
 ###############################################################################
 # Tabelo želimo urediti z zlivanjem (merge sort). Tabelo razdelimo na polovici,
@@ -152,10 +178,12 @@ def merge(target, l1, l2):
 ###############################################################################
 
 def mergesort(a):
-    if len(a) % 2 == 1:
-        s = (len(a) + 1) / 2
+    if len(a) <= 1:
+        return
     else:
-        s = len(a) / 2
-    levi = a[:s]
-    desni = a[s:]
-    while 
+        half = len(a) // 2
+        a1, a2 = a[:half], a[half:]
+        mergesort(a1)
+        mergesort(a2)
+        merge(a, a1, a2)
+        return

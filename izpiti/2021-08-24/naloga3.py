@@ -22,9 +22,68 @@
 # Na spodnji mreži je najvplivnejši sprehod (1, 2, 5, 30, 5, 30, -1, 5) vreden 77 sledilcev. 
 # =============================================================================
 
+from functools import lru_cache
+
 piran = [
     [1, 2,  -3, -10, 9],
     [0, 0,   5,   5, 2],
     [1, 2,  30,  -1, 0],
     [4, 3, -20,  -1, 5],
 ]
+
+# def sledilci(zemljevd):
+#     max_v = len(zemljevd)
+#     max_s = len(zemljevd[0])
+
+#     @lru_cache(maxsize=None)
+#     def inner(v, s, sledilci, bonus=True, korak=None):
+#         if (max_v < v < 0) or (max_s < s < 0) or ( (v, s) == (max_v, max_s)):
+#             sledilci
+#         else:
+#             sledilci += zemljevd[v][s]
+#             moznosti = [
+#                 ("desno", inner(v, s + 1, sledilci)),
+#                 ("dol", inner(v + 1, s, sledilci)),
+#                 ("dol-desno", inner(v + 1, s + 1, sledilci))
+#             ]
+#             if bonus == 1:
+#                 moznosti.append("nazaj", inner())
+
+
+# inner(0, 0, 0)
+
+
+def miha(mreza):
+    m = len(mreza)
+    n = len(mreza[0])
+
+    @lru_cache(maxsize=None)
+    def f(i, j, step_back=True, step=None):
+        # Spodnja desna celica:
+        if i == m-1 and j == n-1:
+            if step_back and step: # Mogoče lahko stopimo nazaj
+                return max(mreza[i][j], mreza[i][j] + f(step[0], step[1], False, None))
+            return mreza[i][j]
+        # Nabiramo možne korake
+        possible = []
+        # Lahko stopimo navzdol
+        if i < m-1:
+            possible.append((i + 1, j))
+            if j < n-1:
+                possible.append((i + 1, j + 1))
+                possible.append((i, j + 1))
+        else:
+            # Če ne moremo stopiti navzdol, potem lahko stopimo desno
+            assert j < n-1
+            possible.append((i, j + 1))
+
+        possible = [
+            f(ii,jj, step_back, (i,j)) for (ii, jj) in possible
+        ]
+        # Mogoče stopimo nazaj
+        if step_back and i + j != 0:
+            possible.append(f(step[0], step[1], False, None))
+
+        return max(possible) + mreza[i][j]
+    
+    return f(0, 0)

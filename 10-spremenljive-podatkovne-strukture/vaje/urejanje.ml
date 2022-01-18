@@ -54,9 +54,14 @@ let rec insert y xs = match xs with
  zaporedoma vstavlja vse elemente seznama v prazen seznam.
 [*----------------------------------------------------------------------------*)
 
-let rec insert_sort l  = match l with
-  |[] -> []
-  |x::xs -> insert x []
+let rec insert_sort l  =
+      let rec aux acc lst = match lst with 
+        |[] -> acc 
+        |x::xs -> aux (insert x acc) xs
+    in 
+    aux [] l
+
+  let insert_sort_resitve list = List.fold_left (fun acc x -> insert x acc) [] list
 
 
 (*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*]
